@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,36 +7,30 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 
-interface ApiKey {
-  id: string;
-  name: string;
-  key: string;
-  created: string;
-  lastUsed: string;
-  requests: number;
-}
+import { apiKeysService, ApiKey } from '@/lib/api';
 
 export default function ApiKeys() {
   const { toast } = useToast();
-  const [keys, setKeys] = useState<ApiKey[]>([
-    {
-      id: '1',
-      name: 'Production Key',
-      key: 'sk_live_4Zx9Y8w7v6u5t4s3r2q1',
-      created: '15 янв 2025',
-      lastUsed: '2 мин назад',
-      requests: 12845,
-    },
-    {
-      id: '2',
-      name: 'Development Key',
-      key: 'sk_test_1a2b3c4d5e6f7g8h9i0j',
-      created: '10 янв 2025',
-      lastUsed: '3 часа назад',
-      requests: 3421,
-    },
-  ]);
+  const [keys, setKeys] = useState<ApiKey[]>([]);
   const [newKeyName, setNewKeyName] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadKeys();
+  }, []);
+
+  const loadKeys = async () => {
+    try {
+      const data = await apiKeysService.getAll();
+      setKeys(data);
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось загрузить ключи",
+        variant: "destructive",
+      });
+    }
+  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -46,7 +40,7 @@ export default function ApiKeys() {
     });
   };
 
-  const generateKey = () => {
+  const generateKey = async () => {
     if (!newKeyName.trim()) {
       toast({
         title: "Ошибка",
@@ -56,29 +50,41 @@ export default function ApiKeys() {
       return;
     }
 
-    const newKey: ApiKey = {
-      id: Date.now().toString(),
-      name: newKeyName,
-      key: `sk_live_${Math.random().toString(36).substring(2, 22)}`,
-      created: 'Только что',
-      lastUsed: 'Не использовался',
-      requests: 0,
-    };
-
-    setKeys([newKey, ...keys]);
-    setNewKeyName('');
-    toast({
-      title: "Ключ создан!",
-      description: "Новый API ключ успешно сгенерирован",
-    });
+    setLoading(true);
+    try {
+      const newKey = await apiKeysService.create(newKeyName);
+      setKeys([newKey, ...keys]);
+      setNewKeyName('');
+      toast({
+        title: "Ключ создан!",
+        description: "Новый API ключ успешно сгенерирован",
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось создать ключ",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const revokeKey = (id: string) => {
-    setKeys(keys.filter((k) => k.id !== id));
-    toast({
-      title: "Ключ отозван",
-      description: "API ключ успешно удален",
-    });
+  const revokeKey = async (id: string) => {
+    try {
+      await apiKeysService.delete(id);
+      setKeys(keys.filter((k) => k.id !== id));
+      toast({
+        title: "Ключ отозван",
+        description: "API ключ успешно удален",
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось удалить ключ",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -108,7 +114,7 @@ export default function ApiKeys() {
               />
             </div>
             <div className="flex items-end">
-              <Button onClick={generateKey} className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Button onClick={generateKey} disabled={loading} className="bg-primary text-primary-foreground hover:bg-primary/90">
                 <Icon name="Plus" size={16} className="mr-2" />
                 Создать ключ
               </Button>

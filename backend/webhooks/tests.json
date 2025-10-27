@@ -1,0 +1,29 @@
+{
+  "tests": [
+    {
+      "name": "Get all webhooks",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "webhooks": []
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Create new webhook",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "url": "https://example.com/webhook",
+        "events": ["chat.message"]
+      },
+      "expectedStatus": 201,
+      "expectedBody": {
+        "url": "https://example.com/webhook",
+        "enabled": true
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,44 +7,47 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
-
-interface Webhook {
-  id: string;
-  url: string;
-  events: string[];
-  enabled: boolean;
-  lastDelivery: string;
-  successRate: number;
-}
+import { webhooksService, Webhook } from '@/lib/api';
 
 export default function Webhooks() {
   const { toast } = useToast();
-  const [webhooks, setWebhooks] = useState<Webhook[]>([
-    {
-      id: '1',
-      url: 'https://api.example.com/webhook/chat',
-      events: ['chat.message', 'chat.status'],
-      enabled: true,
-      lastDelivery: '2 мин назад',
-      successRate: 99.8,
-    },
-    {
-      id: '2',
-      url: 'https://notify.app.io/hooks/ai-events',
-      events: ['ai.complete', 'ai.error'],
-      enabled: true,
-      lastDelivery: '15 мин назад',
-      successRate: 98.5,
-    },
-  ]);
-
+  const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [newUrl, setNewUrl] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const testWebhook = (id: string, url: string) => {
-    toast({
-      title: "Тестовый запрос отправлен",
-      description: `Webhook: ${url}`,
-    });
+  useEffect(() => {
+    loadWebhooks();
+  }, []);
+
+  const loadWebhooks = async () => {
+    try {
+      const data = await webhooksService.getAll();
+      setWebhooks(data);
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось загрузить webhooks",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const testWebhook = async (id: string, url: string) => {
+    try {
+      const result = await webhooksService.test(id);
+      toast({
+        title: result.success ? "Тест успешен" : "Тест не прошел",
+        description: result.message || `Webhook: ${url}`,
+        variant: result.success ? "default" : "destructive",
+      });
+      await loadWebhooks();
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось отправить тест",
+        variant: "destructive",
+      });
+    }
   };
 
   const toggleWebhook = (id: string) => {
@@ -55,12 +58,51 @@ export default function Webhooks() {
     );
   };
 
-  const deleteWebhook = (id: string) => {
-    setWebhooks(webhooks.filter((w) => w.id !== id));
-    toast({
-      title: "Webhook удален",
-      description: "Веб-хук успешно удален",
-    });
+  const deleteWebhook = async (id: string) => {
+    try {
+      await webhooksService.delete(id);
+      setWebhooks(webhooks.filter((w) => w.id !== id));
+      toast({
+        title: "Webhook удален",
+        description: "Веб-хук успешно удален",
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось удалить webhook",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const addWebhook = async () => {
+    if (!newUrl.trim()) {
+      toast({
+        title: "Ошибка",
+        description: "Введите URL",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const newWebhook = await webhooksService.create(newUrl, ['chat.message']);
+      setWebhooks([newWebhook, ...webhooks]);
+      setNewUrl('');
+      toast({
+        title: "Webhook создан",
+        description: "Новый webhook успешно добавлен",
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось создать webhook",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -89,7 +131,7 @@ export default function Webhooks() {
                   onChange={(e) => setNewUrl(e.target.value)}
                   className="flex-1 bg-muted border-border text-foreground font-mono text-sm"
                 />
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                <Button onClick={addWebhook} disabled={loading} className="bg-primary text-primary-foreground hover:bg-primary/90">
                   <Icon name="Plus" size={16} className="mr-2" />
                   Добавить
                 </Button>
