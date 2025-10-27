@@ -11,12 +11,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { gptunnelService } from '@/lib/api';
 
+const API_PROXY_URL = 'https://functions.poehali.dev/61918f9f-16d6-4f2f-b394-1303353f9d34';
+
 export default function Sandbox() {
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('test');
   const [method, setMethod] = useState('POST');
-  const [endpoint, setEndpoint] = useState('/api/gptunnel/complete');
+  const [endpoint, setEndpoint] = useState(API_PROXY_URL);
   const [requestBody, setRequestBody] = useState(`{
-  "model": "gpt-4",
+  "model": "gpt-4o-mini",
   "messages": [
     {
       "role": "user",
@@ -36,55 +39,40 @@ export default function Sandbox() {
     const startTime = Date.now();
     
     try {
-      if (endpoint === '/api/gptunnel/complete') {
-        const body = JSON.parse(requestBody);
-        const result = await gptunnelService.complete(body);
-        
-        const duration = Date.now() - startTime;
-        setResponseTime(duration);
-        setStatusCode(200);
-        setResponse(JSON.stringify(result, null, 2));
-        
-        toast({
-          title: "Запрос выполнен",
-          description: `200 OK • ${duration}ms`,
-        });
-      } else {
-        const headerObj: Record<string, string> = {};
-        headers.split('\n').forEach(line => {
-          const [key, ...values] = line.split(':');
-          if (key && values.length > 0) {
-            headerObj[key.trim()] = values.join(':').trim();
-          }
-        });
-
-        const res = await fetch(`https://api.example.com${endpoint}`, {
-          method,
-          headers: headerObj,
-          body: method !== 'GET' ? requestBody : undefined,
-        });
-
-        const duration = Date.now() - startTime;
-        setResponseTime(duration);
-        setStatusCode(res.status);
-
-        const text = await res.text();
-        try {
-          const json = JSON.parse(text);
-          setResponse(JSON.stringify(json, null, 2));
-        } catch {
-          setResponse(text);
+      const headerObj: Record<string, string> = {};
+      headers.split('\n').forEach(line => {
+        const [key, ...values] = line.split(':');
+        if (key && values.length > 0) {
+          headerObj[key.trim()] = values.join(':').trim();
         }
+      });
 
-        toast({
-          title: "Запрос выполнен",
-          description: `${res.status} ${res.statusText} • ${duration}ms`,
-        });
+      const res = await fetch(endpoint, {
+        method,
+        headers: headerObj,
+        body: method !== 'GET' ? requestBody : undefined,
+      });
+
+      const duration = Date.now() - startTime;
+      setResponseTime(duration);
+      setStatusCode(res.status);
+
+      const text = await res.text();
+      try {
+        const json = JSON.parse(text);
+        setResponse(JSON.stringify(json, null, 2));
+      } catch {
+        setResponse(text);
       }
+
+      toast({
+        title: "Запрос выполнен",
+        description: `${res.status} ${res.statusText} • ${duration}ms`,
+      });
     } catch (error) {
       const duration = Date.now() - startTime;
       setResponseTime(duration);
-      setStatusCode(error instanceof Error && error.message.includes('GPTunnel') ? 500 : 0);
+      setStatusCode(500);
       setResponse(JSON.stringify({
         error: error instanceof Error ? error.message : 'Unknown error',
         details: error instanceof Error ? error.stack : ''
@@ -102,32 +90,37 @@ export default function Sandbox() {
 
   const quickRequests = [
     {
-      name: 'GPT-4 Chat',
+      name: 'GPT-4o Mini',
       method: 'POST',
-      endpoint: '/api/gptunnel/complete',
+      endpoint: API_PROXY_URL,
       body: `{
-  "model": "gpt-4",
+  "model": "gpt-4o-mini",
   "messages": [
     {"role": "user", "content": "Напиши короткую историю про космонавта"}
   ]
 }`
     },
     {
-      name: 'Claude-3 Assistant',
+      name: 'Claude Sonnet',
       method: 'POST',
-      endpoint: '/api/gptunnel/complete',
+      endpoint: API_PROXY_URL,
       body: `{
-  "model": "claude-3",
+  "model": "claude-3-5-sonnet-20241022",
   "messages": [
     {"role": "user", "content": "Объясни квантовую физику простыми словами"}
   ]
 }`
     },
     {
-      name: 'Get Webhooks',
-      method: 'GET',
-      endpoint: '/api/webhooks',
-      body: ''
+      name: 'Gemini Pro',
+      method: 'POST',
+      endpoint: API_PROXY_URL,
+      body: `{
+  "model": "gemini-2.0-flash-exp",
+  "messages": [
+    {"role": "user", "content": "Расскажи интересный факт"}
+  ]
+}`
     },
   ];
 
@@ -137,12 +130,160 @@ export default function Sandbox() {
     setRequestBody(req.body);
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Скопировано",
+      description: "Текст скопирован в буфер обмена",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold text-foreground mb-2">API Sandbox</h2>
-        <p className="text-muted-foreground">Тестирование API запросов в реальном времени</p>
+        <p className="text-muted-foreground">Тестирование и документация API</p>
       </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 bg-muted">
+          <TabsTrigger value="test">Тестирование</TabsTrigger>
+          <TabsTrigger value="docs">Документация</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="docs" className="mt-6">
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-xl text-foreground flex items-center gap-2">
+                <Icon name="BookOpen" className="text-primary" size={24} />
+                Документация API
+              </CardTitle>
+              <CardDescription>Полное руководство по использованию API</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Базовый URL</h3>
+                <div className="flex items-center gap-2 p-3 bg-muted rounded-lg border border-border">
+                  <code className="flex-1 font-mono text-sm text-foreground">{API_PROXY_URL}</code>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => copyToClipboard(API_PROXY_URL)}
+                  >
+                    <Icon name="Copy" size={16} />
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Аутентификация</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Все запросы требуют API ключ в заголовке <code className="bg-muted px-1.5 py-0.5 rounded">X-Api-Key</code>
+                </p>
+                <div className="p-4 bg-muted rounded-lg border border-border">
+                  <pre className="text-xs font-mono text-foreground overflow-x-auto">
+{`curl -X POST ${API_PROXY_URL} \\
+  -H "Content-Type: application/json" \\
+  -H "X-Api-Key: YOUR_API_KEY" \\
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'`}
+                  </pre>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Доступные модели</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {[
+                    { name: 'gpt-4o-mini', desc: 'OpenAI GPT-4o Mini - быстрый и экономичный' },
+                    { name: 'gpt-4o', desc: 'OpenAI GPT-4o - самая мощная модель' },
+                    { name: 'claude-3-5-sonnet-20241022', desc: 'Anthropic Claude 3.5 Sonnet' },
+                    { name: 'gemini-2.0-flash-exp', desc: 'Google Gemini 2.0 Flash' },
+                  ].map((model) => (
+                    <div key={model.name} className="p-3 bg-muted/50 rounded-lg border border-border">
+                      <code className="text-sm font-mono text-primary">{model.name}</code>
+                      <p className="text-xs text-muted-foreground mt-1">{model.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Параметры запроса</h3>
+                <div className="space-y-2">
+                  {[
+                    { param: 'model', type: 'string', required: true, desc: 'Модель для генерации ответа' },
+                    { param: 'messages', type: 'array', required: true, desc: 'Массив сообщений с ролями (user/assistant/system)' },
+                    { param: 'temperature', type: 'number', required: false, desc: 'Температура генерации (0.0-2.0), по умолчанию 0.7' },
+                    { param: 'max_tokens', type: 'number', required: false, desc: 'Максимальное количество токенов в ответе' },
+                  ].map((param) => (
+                    <div key={param.param} className="flex items-start gap-3 p-3 bg-muted/50 rounded border border-border">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <code className="text-sm font-mono text-foreground">{param.param}</code>
+                          <Badge variant="outline" className="text-xs">{param.type}</Badge>
+                          {param.required && <Badge className="text-xs bg-destructive/20 text-destructive">required</Badge>}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{param.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Пример ответа</h3>
+                <div className="p-4 bg-muted rounded-lg border border-border">
+                  <pre className="text-xs font-mono text-foreground overflow-x-auto">
+{`{
+  "id": "chatcmpl-abc123",
+  "object": "chat.completion",
+  "created": 1699999999,
+  "model": "gpt-4o-mini",
+  "choices": [{
+    "index": 0,
+    "message": {
+      "role": "assistant",
+      "content": "Привет! Как я могу помочь?"
+    },
+    "finish_reason": "stop"
+  }],
+  "usage": {
+    "prompt_tokens": 10,
+    "completion_tokens": 15,
+    "total_tokens": 25
+  }
+}`}
+                  </pre>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Коды ответов</h3>
+                <div className="space-y-2">
+                  {[
+                    { code: 200, desc: 'Успешный запрос' },
+                    { code: 401, desc: 'Отсутствует или неверный API ключ' },
+                    { code: 403, desc: 'API ключ отключен' },
+                    { code: 429, desc: 'Превышен лимит запросов' },
+                    { code: 500, desc: 'Внутренняя ошибка сервера' },
+                  ].map((status) => (
+                    <div key={status.code} className="flex items-center gap-3 p-2 bg-muted/50 rounded">
+                      <Badge className={status.code === 200 ? 'bg-primary/20 text-primary' : 'bg-destructive/20 text-destructive'}>
+                        {status.code}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">{status.desc}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="test" className="mt-6">
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {quickRequests.map((req) => (
@@ -292,34 +433,8 @@ export default function Sandbox() {
         </Card>
       </div>
 
-      <Card className="bg-card border-border border-secondary/30">
-        <CardHeader>
-          <CardTitle className="text-lg text-foreground flex items-center gap-2">
-            <Icon name="BookOpen" className="text-secondary" size={20} />
-            Документация API
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          <div>
-            <h4 className="font-semibold text-foreground mb-2">GPTunnel Integration</h4>
-            <p className="text-muted-foreground mb-2">
-              Endpoint: <code className="text-primary font-mono text-xs">/api/gptunnel/complete</code>
-            </p>
-            <p className="text-muted-foreground">
-              Поддерживаемые модели: GPT-4, GPT-3.5 Turbo, Claude-3, Gemini Pro
-            </p>
-          </div>
-          <div className="pt-2 border-t border-border">
-            <h4 className="font-semibold text-foreground mb-2">Webhooks API</h4>
-            <p className="text-muted-foreground">
-              GET <code className="text-secondary font-mono text-xs">/api/webhooks</code> - список webhooks
-            </p>
-            <p className="text-muted-foreground">
-              POST <code className="text-primary font-mono text-xs">/api/webhooks</code> - создать webhook
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
