@@ -17,7 +17,7 @@ export default function Sandbox() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('test');
   const [method, setMethod] = useState('POST');
-  const [endpoint, setEndpoint] = useState(API_PROXY_URL);
+  const [endpoint, setEndpoint] = useState(`${API_PROXY_URL}/v1/chat/completions`);
   const [requestBody, setRequestBody] = useState(`{
   "model": "gpt-4o-mini",
   "messages": [
@@ -92,7 +92,7 @@ export default function Sandbox() {
     {
       name: 'GPT-4o Mini',
       method: 'POST',
-      endpoint: API_PROXY_URL,
+      endpoint: `${API_PROXY_URL}/v1/chat/completions`,
       body: `{
   "model": "gpt-4o-mini",
   "messages": [
@@ -103,7 +103,7 @@ export default function Sandbox() {
     {
       name: 'Claude Sonnet',
       method: 'POST',
-      endpoint: API_PROXY_URL,
+      endpoint: `${API_PROXY_URL}/v1/chat/completions`,
       body: `{
   "model": "claude-3-5-sonnet-20241022",
   "messages": [
@@ -114,7 +114,7 @@ export default function Sandbox() {
     {
       name: 'Gemini Pro',
       method: 'POST',
-      endpoint: API_PROXY_URL,
+      endpoint: `${API_PROXY_URL}/v1/chat/completions`,
       body: `{
   "model": "gemini-2.0-flash-exp",
   "messages": [
