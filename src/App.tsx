@@ -10,6 +10,7 @@ import Webhooks from './components/Webhooks';
 import Logs from './components/Logs';
 import Settings from './components/Settings';
 import Sandbox from './components/Sandbox';
+import History from './components/History';
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,8 @@ const App = () => {
         return <Dashboard />;
       case 'sandbox':
         return <Sandbox />;
+      case 'history':
+        return <History />;
       case 'api-keys':
         return <ApiKeys />;
       case 'webhooks':

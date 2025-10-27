@@ -10,6 +10,7 @@ interface SidebarProps {
 const menuItems = [
   { id: 'dashboard', label: 'Дашборд', icon: 'LayoutDashboard' },
   { id: 'sandbox', label: 'Sandbox', icon: 'FlaskConical' },
+  { id: 'history', label: 'История', icon: 'History' },
   { id: 'api-keys', label: 'API-ключи', icon: 'Key' },
   { id: 'webhooks', label: 'Веб-хуки', icon: 'Webhook' },
   { id: 'logs', label: 'Логи', icon: 'Terminal' },

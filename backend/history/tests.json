@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "name": "Get request history",
+      "method": "GET",
+      "path": "/?action=history&limit=10",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "history": []
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get token statistics",
+      "method": "GET",
+      "path": "/?action=stats",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "models": [],
+        "daily": []
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

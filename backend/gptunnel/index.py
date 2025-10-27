@@ -2,6 +2,8 @@ import json
 import os
 import requests
 from typing import Dict, Any
+from datetime import datetime
+import psycopg2
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -96,6 +98,45 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         result = response.json()
         
+        usage = result.get('usage', {})
+        prompt_tokens = usage.get('prompt_tokens', 0)
+        completion_tokens = usage.get('completion_tokens', 0)
+        total_tokens = usage.get('total_tokens', 0)
+        ai_content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+        
+        database_url = os.environ.get('DATABASE_URL')
+        if database_url:
+            try:
+                conn = psycopg2.connect(database_url)
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO request_history 
+                        (endpoint, method, model, prompt_tokens, completion_tokens, total_tokens, 
+                         status_code, user_message, ai_response)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, ('/api/gptunnel/complete', 'POST', model, prompt_tokens, 
+                          completion_tokens, total_tokens, 200, 
+                          messages[-1].get('content', '') if messages else '',
+                          ai_content[:1000]))
+                    
+                    cur.execute("""
+                        INSERT INTO token_stats (date, model, total_requests, total_tokens, 
+                                                prompt_tokens, completion_tokens)
+                        VALUES (CURRENT_DATE, %s, 1, %s, %s, %s)
+                        ON CONFLICT (date, model) 
+                        DO UPDATE SET 
+                            total_requests = token_stats.total_requests + 1,
+                            total_tokens = token_stats.total_tokens + %s,
+                            prompt_tokens = token_stats.prompt_tokens + %s,
+                            completion_tokens = token_stats.completion_tokens + %s
+                    """, (model, total_tokens, prompt_tokens, completion_tokens,
+                          total_tokens, prompt_tokens, completion_tokens))
+                    
+                    conn.commit()
+                conn.close()
+            except Exception:
+                pass
+        
         return {
             'statusCode': 200,
             'headers': {
@@ -104,8 +145,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             },
             'body': json.dumps({
                 'model': result.get('model', model),
-                'content': result.get('choices', [{}])[0].get('message', {}).get('content', ''),
-                'usage': result.get('usage', {}),
+                'content': ai_content,
+                'usage': usage,
                 'finish_reason': result.get('choices', [{}])[0].get('finish_reason', 'stop')
             }),
             'isBase64Encoded': False
