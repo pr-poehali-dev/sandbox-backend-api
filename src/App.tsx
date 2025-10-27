@@ -9,6 +9,7 @@ import ApiKeys from './components/ApiKeys';
 import Webhooks from './components/Webhooks';
 import Logs from './components/Logs';
 import Settings from './components/Settings';
+import Sandbox from './components/Sandbox';
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,8 @@ const App = () => {
     switch (activeTab) {
       case 'dashboard':
         return <Dashboard />;
+      case 'sandbox':
+        return <Sandbox />;
       case 'api-keys':
         return <ApiKeys />;
       case 'webhooks':
