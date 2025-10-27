@@ -68,7 +68,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     try:
         response = requests.post(
-            'https://api.gptunnel.ru/v1/chat/completions',
+            'https://gptunnel.ru/v1/chat/completions',
             headers={
                 'Authorization': f'Bearer {gptunnel_key}',
                 'Content-Type': 'application/json'
