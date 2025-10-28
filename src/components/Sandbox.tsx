@@ -93,6 +93,7 @@ export default function Sandbox() {
       name: 'GPT-4o Mini',
       method: 'POST',
       endpoint: apiEndpoint,
+      displayEndpoint: 'https://{домен_проекта}/v1/chat/completions',
       body: `{
   "model": "gpt-4o-mini",
   "messages": [
@@ -104,6 +105,7 @@ export default function Sandbox() {
       name: 'Claude Sonnet',
       method: 'POST',
       endpoint: apiEndpoint,
+      displayEndpoint: 'https://{домен_проекта}/v1/chat/completions',
       body: `{
   "model": "claude-3-5-sonnet-20241022",
   "messages": [
@@ -115,6 +117,7 @@ export default function Sandbox() {
       name: 'Gemini Pro',
       method: 'POST',
       endpoint: apiEndpoint,
+      displayEndpoint: 'https://{домен_проекта}/v1/chat/completions',
       body: `{
   "model": "gemini-2.0-flash-exp",
   "messages": [
@@ -303,7 +306,7 @@ export default function Sandbox() {
                   {req.method}
                 </Badge>
               </div>
-              <CardDescription className="text-xs font-mono">{req.endpoint}</CardDescription>
+              <CardDescription className="text-xs font-mono">{req.displayEndpoint}</CardDescription>
             </CardHeader>
           </Card>
         ))}
