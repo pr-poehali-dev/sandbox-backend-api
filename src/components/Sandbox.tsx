@@ -93,7 +93,7 @@ export default function Sandbox() {
       name: 'GPT-4o Mini',
       method: 'POST',
       endpoint: apiEndpoint,
-      displayEndpoint: 'https://{домен_проекта}/v1/chat/completions',
+      displayEndpoint: `${window.location.origin}/v1/chat/completions`,
       body: `{
   "model": "gpt-4o-mini",
   "messages": [
@@ -105,7 +105,7 @@ export default function Sandbox() {
       name: 'Claude Sonnet',
       method: 'POST',
       endpoint: apiEndpoint,
-      displayEndpoint: 'https://{домен_проекта}/v1/chat/completions',
+      displayEndpoint: `${window.location.origin}/v1/chat/completions`,
       body: `{
   "model": "claude-3-5-sonnet-20241022",
   "messages": [
@@ -117,7 +117,7 @@ export default function Sandbox() {
       name: 'Gemini Pro',
       method: 'POST',
       endpoint: apiEndpoint,
-      displayEndpoint: 'https://{домен_проекта}/v1/chat/completions',
+      displayEndpoint: `${window.location.origin}/v1/chat/completions`,
       body: `{
   "model": "gemini-2.0-flash-exp",
   "messages": [
@@ -167,7 +167,7 @@ export default function Sandbox() {
               <div>
                 <h3 className="text-lg font-semibold text-foreground mb-2">API Endpoint</h3>
                 <div className="flex items-center gap-2 p-3 bg-muted rounded-lg border border-border">
-                  <code className="flex-1 font-mono text-sm text-foreground">POST https://{'{домен_проекта}'}/v1/chat/completions</code>
+                  <code className="flex-1 font-mono text-sm text-foreground">POST {window.location.origin}/v1/chat/completions</code>
                   <Button
                     size="sm"
                     variant="ghost"
@@ -185,7 +185,7 @@ export default function Sandbox() {
                 </p>
                 <div className="p-4 bg-muted rounded-lg border border-border">
                   <pre className="text-xs font-mono text-foreground overflow-x-auto">
-{`curl -X POST https://{домен_проекта}/v1/chat/completions \\
+{`curl -X POST ${window.location.origin}/v1/chat/completions \\
   -H "Content-Type: application/json" \\
   -H "X-Api-Key: YOUR_API_KEY" \\
   -d '{
