@@ -11,13 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { gptunnelService } from '@/lib/api';
 
-const API_PROXY_URL = 'https://functions.poehali.dev/61918f9f-16d6-4f2f-b394-1303353f9d34';
+const API_PROXY_URL = `${window.location.origin}/v1/chat/completions`;
 
 export default function Sandbox() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('test');
   const [method, setMethod] = useState('POST');
-  const [endpoint, setEndpoint] = useState(API_PROXY_URL);
+  const [endpoint, setEndpoint] = useState(`${window.location.origin}/v1/chat/completions`);
   const [requestBody, setRequestBody] = useState(`{
   "model": "gpt-4o-mini",
   "messages": [
@@ -88,11 +88,13 @@ export default function Sandbox() {
     }
   };
 
+  const apiEndpoint = `${window.location.origin}/v1/chat/completions`;
+
   const quickRequests = [
     {
       name: 'GPT-4o Mini',
       method: 'POST',
-      endpoint: API_PROXY_URL,
+      endpoint: apiEndpoint,
       body: `{
   "model": "gpt-4o-mini",
   "messages": [
@@ -103,7 +105,7 @@ export default function Sandbox() {
     {
       name: 'Claude Sonnet',
       method: 'POST',
-      endpoint: API_PROXY_URL,
+      endpoint: apiEndpoint,
       body: `{
   "model": "claude-3-5-sonnet-20241022",
   "messages": [
@@ -114,7 +116,7 @@ export default function Sandbox() {
     {
       name: 'Gemini Pro',
       method: 'POST',
-      endpoint: API_PROXY_URL,
+      endpoint: apiEndpoint,
       body: `{
   "model": "gemini-2.0-flash-exp",
   "messages": [
@@ -164,11 +166,11 @@ export default function Sandbox() {
               <div>
                 <h3 className="text-lg font-semibold text-foreground mb-2">API Endpoint</h3>
                 <div className="flex items-center gap-2 p-3 bg-muted rounded-lg border border-border">
-                  <code className="flex-1 font-mono text-sm text-foreground">POST {API_PROXY_URL}</code>
+                  <code className="flex-1 font-mono text-sm text-foreground">POST {window.location.origin}/v1/chat/completions</code>
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => copyToClipboard(API_PROXY_URL)}
+                    onClick={() => copyToClipboard(`${window.location.origin}/v1/chat/completions`)}
                   >
                     <Icon name="Copy" size={16} />
                   </Button>
@@ -182,7 +184,7 @@ export default function Sandbox() {
                 </p>
                 <div className="p-4 bg-muted rounded-lg border border-border">
                   <pre className="text-xs font-mono text-foreground overflow-x-auto">
-{`curl -X POST ${API_PROXY_URL} \\
+{`curl -X POST ${window.location.origin}/v1/chat/completions \\
   -H "Content-Type: application/json" \\
   -H "X-Api-Key: YOUR_API_KEY" \\
   -d '{
