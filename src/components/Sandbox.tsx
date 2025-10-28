@@ -11,8 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { gptunnelService } from '@/lib/api';
 
-const API_PROXY_URL = `${window.location.origin}/v1/chat/completions`;
-
 export default function Sandbox() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('test');
