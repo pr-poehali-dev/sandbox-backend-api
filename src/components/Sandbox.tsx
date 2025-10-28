@@ -164,7 +164,7 @@ export default function Sandbox() {
               <div>
                 <h3 className="text-lg font-semibold text-foreground mb-2">API Endpoint</h3>
                 <div className="flex items-center gap-2 p-3 bg-muted rounded-lg border border-border">
-                  <code className="flex-1 font-mono text-sm text-foreground">POST https://{'{'}{window.location.host}{'}'}/v1/chat/completions</code>
+                  <code className="flex-1 font-mono text-sm text-foreground">POST https://{'{домен_проекта}'}/v1/chat/completions</code>
                   <Button
                     size="sm"
                     variant="ghost"
